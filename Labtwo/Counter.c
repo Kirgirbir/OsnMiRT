@@ -1,11 +1,9 @@
-// НЕ РАБОТАЕТ
-
+//РАБОТАЕТ ЧАСТИЧНО, НАДО РАЗОБРАТЬСЯ, ПОЧЕМУ НЕ ВЫВОДИТ
 #pragma config ALTI2C1 = ON
 
 #define FCY 40000000
 #include <xc.h>
 #include <libpic30.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #define PIN_EN (1 << 2)
@@ -27,8 +25,8 @@ LDCType_t;
 
 void initI2C(void)
 {
- I2C1BRG = 0xC3; // частота синхронизации
- I2C1CONLbits.I2CEN = 1; //Включить I2C
+ I2C1BRG = 0xC3; // ??????? ?????????????
+ I2C1CONLbits.I2CEN = 1; //???????? I2C
  I2C1CONLbits.I2CSIDL=1; //
 }
 
@@ -73,14 +71,6 @@ void LCDSend(uint8_t lcd_addr, uint8_t data, LDCType_t flags)
  I2CWriteBuff(lcd_addr,&data_arr,6);
 }
 
- void strobe(int freq_inp) { //Функция мигания. Частота делится на два, потому что иначе ожидание будет равно двум заданным временным константам, а не одной
-        int freq = freq_inp/2;
-        I2CWrite(LCD_ADRESS, 0x08);
-        __delay_ms(freq)
-        I2CWrite(LCD_ADRESS, 0x00);
-        __delay_ms(freq)         
- } 
- 
 void LCDInit(void)
 {
  LCDSend(LCD_ADRESS, 0b00110000,COMMAND);
@@ -97,14 +87,14 @@ void LCDPritStr(uint8_t* str, uint16_t len)
     } 
 }
 
-const char tochar (uint8_t count)
+const uint8_t tochar (uint8_t count)
 {
     static char aString[4];
 
-    aString[0] = count /= 10;
-    aString[1] = (count % 10) + '0';  
-    aString[2] = (count % 100) + '0'; 
-    aString[3] = (count % 1000) + '0';
+    aString[0] = count % 10;
+    aString[1] = ((count %100) / 10) + '0';  
+    aString[2] = ((count % 1000) / 100) + '0'; 
+    aString[3] = (count / 1000) + '0';
 
     return aString;
 }
@@ -114,27 +104,23 @@ void main(){
     LCDInit();
     TRISEbits.TRISE13=1;
     CNPUEbits.CNPUE13=1;
-    uint8_t counter = 0;
-    uint8_t mode = 0;
-//    uint8_t string[12];
-//    uint8_t screenmode = 1;
-    LCDPritStr("Hello World", 11);
-//    sprintf(string,'%d', counter);
-//    LCDPritStr(string, 12);
-//    __delay_ms(1000)
+    uint8_t counter = 2;
+    uint8_t mode = 1;
+    uint8_t screenmode = 0;
     while(1){
-        while (!PORTEbits.RE13) {
-            if (!mode) {
+        while (PORTEbits.RE13) {
+            if (mode) {
                 counter += 1;
                 mode = 1;
-//                screenmode = 1;
+                screenmode = 1;
             }
         }
         mode = 0;
         LCDSend(LCD_ADRESS, RET_STRING,COMMAND);
-//        if (screenmode) {
+        if (screenmode == 1) {
+        LCDSend(LCD_ADRESS, LCD_CLEAR,COMMAND); 
         LCDPritStr(tochar(counter), 4);
-//            screenmode = 0;
-//        }
+            screenmode = 0;
+      }
     }
 }
