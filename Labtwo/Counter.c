@@ -1,4 +1,3 @@
-//РАБОТАЕТ ЧАСТИЧНО, НАДО РАЗОБРАТЬСЯ, ПОЧЕМУ НЕ ВЫВОДИТ
 #pragma config ALTI2C1 = ON
 
 #define FCY 40000000
@@ -25,9 +24,9 @@ LDCType_t;
 
 void initI2C(void)
 {
- I2C1BRG = 0xC3; // ??????? ?????????????
- I2C1CONLbits.I2CEN = 1; //???????? I2C
- I2C1CONLbits.I2CSIDL=1; //
+ I2C1BRG = 0xC3; 
+ I2C1CONLbits.I2CEN = 1; 
+ I2C1CONLbits.I2CSIDL=1;
 }
 
 void I2CWrite(uint8_t adr,uint8_t data)
@@ -87,40 +86,31 @@ void LCDPritStr(uint8_t* str, uint16_t len)
     } 
 }
 
-const uint8_t tochar (uint8_t count)
-{
-    static char aString[4];
-
-    aString[0] = count % 10;
-    aString[1] = ((count %100) / 10) + '0';  
-    aString[2] = ((count % 1000) / 100) + '0'; 
-    aString[3] = (count / 1000) + '0';
-
-    return aString;
-}
 
 void main(){
     initI2C();
     LCDInit();
     TRISEbits.TRISE13=1;
     CNPUEbits.CNPUE13=1;
-    uint8_t counter = 2;
+    uint8_t aString[4];
+    uint8_t counter = 1;
     uint8_t mode = 1;
     uint8_t screenmode = 0;
     while(1){
         while (PORTEbits.RE13) {
-            if (mode) {
-                counter += 1;
+            if (!mode) {    
+                counter++;
                 mode = 1;
                 screenmode = 1;
             }
         }
         mode = 0;
-        LCDSend(LCD_ADRESS, RET_STRING,COMMAND);
-        if (screenmode == 1) {
-        LCDSend(LCD_ADRESS, LCD_CLEAR,COMMAND); 
-        LCDPritStr(tochar(counter), 4);
-            screenmode = 0;
-      }
+    aString[3] = counter % 10 + '0';
+    aString[2] = ((counter % 100) / 10) + '0';  
+    aString[1] = ((counter % 1000) / 100) + '0'; 
+    aString[0] = (counter / 1000) + '0';
+        LCDSend(LCD_ADRESS, RET_STRING,COMMAND);   
+        LCDPritStr(aString, 4);
+        __delay_ms(5)
     }
 }
