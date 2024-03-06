@@ -1,3 +1,5 @@
+#pragma config ALTI2C1 = ON
+
 #define FCY 40000000
 #include <xc.h>
 #include <stdio.h>
